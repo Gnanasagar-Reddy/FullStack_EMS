@@ -1,8 +1,8 @@
 
-const Printpayslip = () => {
+const PrintPayslip = () => {
   return (
-    <div>Printpayslip</div>
+    <div>PrintPayslip</div>
   )
 }
 
-export default Printpayslip
+export default PrintPayslip
