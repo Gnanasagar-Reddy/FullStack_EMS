@@ -14,7 +14,7 @@ const Sidebar = () => {
     useEffect(() => {
         setMobileOpen(false);
     }, [pathname])
-    const role="" || "EMPLOYEE";
+    const role="ADMIN" || "EMPLOYEE";
     const navItems=[
         {name: "Dashboard" ,href: "/dashboard" ,icon: LayoutGridIcon},
         role === "ADMIN"?
