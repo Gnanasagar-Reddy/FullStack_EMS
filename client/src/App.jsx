@@ -7,9 +7,9 @@ import Settings from './pages/Settings';
 import Dashboard from './pages/Dashboard';
 import Leave from './pages/Leave';
 import Attendance from './pages/Attendance';
-import Payslip from './pages/Payslip';
 import Layout from './pages/Layout';
 import LoginForm from './components/LoginForm';
+import Payslips from './pages/Payslips';
 const App = () => {
    return( 
    <>
@@ -23,7 +23,7 @@ const App = () => {
             <Route path='/employees' element={< Employees />}/>
             <Route path='/attendance' element={< Attendance />}/>
             <Route path='/leave' element={< Leave />}/>
-            <Route path='/payslips' element={< Payslip />}/>
+            <Route path='/payslips' element={< Payslips />}/>
             <Route path='/settings' element={< Settings />}/>
          </Route>
          <Route path='/print/payslips/:id' element={<PrintPayslip />} />
