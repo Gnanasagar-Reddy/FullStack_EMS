@@ -32,5 +32,5 @@ app.use("/api/payslips" , payslipRouter);
 app.use("/api/dashboard" , dashboardRouter);
 app.use("/api/inngest", serve({ client: inngest, functions }));
 
-await connectDB
+await connectDB()
 app.listen(port,()=>console.log(`server is started at port ${port}`));
