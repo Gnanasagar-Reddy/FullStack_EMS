@@ -1,3 +1,4 @@
+import Employee from "../models/Employee.js";
 import Payslip from "../models/Payslip.js";
 
 
@@ -87,9 +88,9 @@ export const getPayslipById = async (req, res) => {
         const payslip = await Payslip.findById(req.params.id).populate("employeeId").lean();
         if(!payslip)return res.status(404).json({error:"Not found"})
         const result={
-          ...Payslip,
+          ...payslip,
           id:payslip._id.toString(),
-          empolyee:payslip.employeeId,
+          employee:payslip.employeeId,
         } 
         return res.json({result})   
     } catch (error) {

@@ -4,16 +4,24 @@ import Loading from "../components/Loading";
 import CheckInButton from "../components/attendance/CheckInButton";
 import AttendanceStats from "../components/attendance/AttendanceStats";
 import AttendanceHistory from "../components/attendance/AttendanceHistory";
+import toast from "react-hot-toast";
+import api from "../api/axios";
 
 function Attendance() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isDeleted, setIsDeleted] = useState(false)
   const fetchData = useCallback(async () => {
-    setHistory(dummyAttendanceData)
-    setTimeout(() => {
+    try {
+      const res = await api.get("/attendance");
+      const json = res.data;
+      setHistory(json.data || [])
+      if (json.employee?.isDeleted) setIsDeleted(true)
+    } catch (error) {
+      toast.error(error?.response?.data?.error || error?.message)
+    } finally {
       setLoading(false)
-    }, 1000)
+    }
   }, [])
   useEffect(() => {
     fetchData()
@@ -23,6 +31,9 @@ function Attendance() {
 
   const today = new Date();
   today.setHours(0, 0, 0, 0)
+  console.log(history)
+  console.log(today)
+  console.log(history.length)
   const todayRecord = history.find((r) => new Date(r.date).toDateString() === today.toDateString());
 
   return (

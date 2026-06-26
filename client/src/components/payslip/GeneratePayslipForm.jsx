@@ -1,5 +1,7 @@
 import { Loader2, Plus, X } from 'lucide-react';
 import React, { useState } from 'react'
+import api from '../../api/axios';
+import toast from 'react-hot-toast';
 
 const GeneratePayslipForm = ({ employees, onSuccess }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -13,6 +15,18 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
     }
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+        const formData = new FormData(e.currentTarget);
+        const data = Object.fromEntries(formData.entries());
+        try {
+            await api.post('/payslips', data)
+            setIsOpen(false)
+            onSuccess()
+        } catch (err) {
+            toast.error(err.response?.data?.error || err?.message);
+        } finally {
+            setLoading(false)
+        }
     }
     return (
         <div className='fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4'>
@@ -60,38 +74,38 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
                             <label className="block text-sm font-medium text-slate-700 mb-2">
                                 Year
                             </label>
-                            <input type="number" name='year' defaultValue={new Date().getFullYear()}/>
+                            <input type="number" name='year' defaultValue={new Date().getFullYear()} />
                         </div>
                     </div>
                     {/* Basic Salary */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                BasicSalary
-                            </label>
-                            <input type="number" name='Basic Salary' required placeholder='5000'/>
-                        </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                            BasicSalary
+                        </label>
+                        <input type="number" name="basicSalary" required placeholder="5000" />
+                    </div>
                     {/* Allowances and Deductions */}
                     <div className='grid grid-cols-2 gap-4'>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2">
                                 Allowances
                             </label>
-                            <input type="number" name='allowances'  defaultValue={0}/>
+                            <input type="number" name='allowances' defaultValue={0} />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2">
                                 Deductions
                             </label>
-                            <input type="number" name='deductions' defaultValue={0}/>
+                            <input type="number" name='deductions' defaultValue={0} />
                         </div>
                     </div>
                     {/* buttons */}
                     <div className='flex justify-end gap-3 pt-2'>
-                        <button onClick={()=>setIsOpen(false)} type='button' className='btn-secondary'> 
+                        <button onClick={() => setIsOpen(false)} type='button' className='btn-secondary'>
                             Cancel
                         </button>
-                        <button disabled={loading} type='submit' className='btn-primary flex items-center justify-center'> 
-                            {loading && <Loader2 className='w-4 h-4 mr-2 animate-spin'/>}
+                        <button disabled={loading} type='submit' className='btn-primary flex items-center justify-center'>
+                            {loading && <Loader2 className='w-4 h-4 mr-2 animate-spin' />}
                             Generate
                         </button>
                     </div>

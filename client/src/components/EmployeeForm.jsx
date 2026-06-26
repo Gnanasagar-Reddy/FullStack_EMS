@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from "react-router-dom"
 import { DEPARTMENTS } from '../assets/assets';
+import api from '../api/axios';
+import { Loader2Icon } from 'lucide-react';
 
 const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
     const navigate = useNavigate();
@@ -8,6 +10,22 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
     const isEditMode = !!initialData;
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true)
+        const formData = new FormData(e.currentTarget);
+        if (isEditMode) {
+            const pwd = formData.get("password")
+            if (!pwd) formData.delete("password")
+        }
+        try {
+            const url = isEditMode ? `/employees/${initialData.id}` : "/employees";
+            const method = isEditMode ? "put" : "post";
+            await api[method](url, formData)
+            onSuccess ? onSuccess() : navigate("/employees")
+        } catch (error) {
+            toast.error(error.response?.data?.error || error.message);
+        } finally {
+            setLoading(false);
+        }
     }
     return (
         <form onSubmit={handleSubmit} className='space-y-6 max-w-3xl animate-fade-in'>
@@ -111,14 +129,24 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
                             <input name='password' type='password' placeholder='Leave blank to keep current' />
                         </div>
                     )}
-                        <div>
-                            <label className='block mb-2'>System Role</label>
-                            <select name="role" defaultValue={initialData?.user?.role || "Employee"}>
-                                <option value="EMPLOYEE">Employee</option>
-                                <option value="ADMIN">Admin</option>
-                            </select>
-                        </div>
+                    <div>
+                        <label className='block mb-2'>System Role</label>
+                        <select name="role" defaultValue={initialData?.user?.role || "Employee"}>
+                            <option value="EMPLOYEE">Employee</option>
+                            <option value="ADMIN">Admin</option>
+                        </select>
+                    </div>
                 </div>
+            </div>
+            {/* buttons */}
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
+                <button type="button" className="btn-secondary" onClick={() => (onCancel ? onCancel() : navigate(-1))}>
+                    Cancel
+                </button>
+                <button type="submit" disabled={loading} className="btn-primary flex items-center justify-center">
+                    {loading && <Loader2Icon className="w-4 h-4 mr-2 animate-spin" />}
+                    {isEditMode ? "Update Employee" : "Create Employee"}
+                </button>
             </div>
         </form>
     )

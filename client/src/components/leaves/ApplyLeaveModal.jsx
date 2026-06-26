@@ -1,5 +1,7 @@
 import { CalendarDays, FileText, Loader2, Send, X } from 'lucide-react';
 import React, { useState } from 'react'
+import api from '../../api/axios';
+import toast from 'react-hot-toast';
 
 const ApplyLeaveModal = ({ open, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -10,7 +12,19 @@ const ApplyLeaveModal = ({ open, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  }
+    setLoading(true);
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+    try {
+      await api.post('/leave', data);
+      onSuccess();
+      onClose();
+    } catch (err) {
+      toast.error(err.response?.data?.error || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
   if (!open) return null;
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm' onClick={onClose}>
@@ -79,16 +93,16 @@ const ApplyLeaveModal = ({ open, onClose, onSuccess }) => {
             <label className='text-sm font-medium text-slate-700 mb-2 block '>
               Reason
             </label>
-            <textarea name='reason' required rows={3} className='resize-none' placeholder='Briefly describe why you need this leave...'/>
+            <textarea name='reason' required rows={3} className='resize-none' placeholder='Briefly describe why you need this leave...' />
           </div>
           {/* buttons */}
           <div className='flex gap-3 pt-2'>
             <button className='btn-secondary flex-1' type='button' onClick={onClose}>
-               Cancel
+              Cancel
             </button>
-            <button className='btn-secondary flex-1' type='submit' disabled={loading} onClick={onClose} className="flex flex-1 btn-primary items-center justify-center gap-2" >
-               {loading ? <Loader2 className='w-4 h-4 animate-spin'/> :<Send className='w-4 h-4'/>}
-               {loading ? "Submitting..." : "Submit"}
+            <button type='submit' disabled={loading} className="flex flex-1 btn-primary items-center justify-center gap-2" >
+              {loading ? <Loader2 className='w-4 h-4 animate-spin' /> : <Send className='w-4 h-4' />}
+              {loading ? "Submitting..." : "Submit"}
             </button>
           </div>
 
