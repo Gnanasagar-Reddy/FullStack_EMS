@@ -48,7 +48,10 @@ export const createLeave = async (req, res) => {
 
         return res.json({ success: true, data: leave })
     } catch (error) {
-        return res.status(500).json({ error: "Failed" })
+        console.error("Create Leave Error:", error);
+        return res.status(500).json({
+            error: error.message,
+        });
     }
 }
 

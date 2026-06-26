@@ -15,7 +15,7 @@ const employeeSchema = new mongoose.Schema({
   joinDate : {type : Date ,required :true},
   isDeleted : {type : Boolean ,required :false},
   bio : {type : String ,default :""},
-  departments : {type : String ,enum :DEPARTMENTS},
+  department : {type : String ,enum :DEPARTMENTS},
 
 
 },{timestamps:true})

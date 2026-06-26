@@ -1,10 +1,20 @@
 import React, { useState } from 'react'
-import {format} from "date-fns"
+import { format } from "date-fns"
 import { Check, Loader2, X } from 'lucide-react';
+import api from '../../api/axios';
+import toast from 'react-hot-toast';
 const LeaveHistory = ({ leaves, isAdmin, onUpdate }) => {
     const [processing, setProcessing] = useState(null);
-    const handleStateUpdate = async (id, status) => {
-        setProcessing(id);
+    const handleStatusUpdate = async (id, status) => {
+        setProcessing(id)
+        try {
+            await api.patch(`/leave/${id}`, { status })
+            onUpdate();
+        } catch (error) {
+            toast.error(error?.response?.data?.error || error?.message)
+        } finally {
+            setProcessing(null)
+        }
     }
     return (
         <div className='card overflow-hidden'>
@@ -65,7 +75,7 @@ const LeaveHistory = ({ leaves, isAdmin, onUpdate }) => {
                                                     {leave.status === "PENDING" && (
                                                         <div className='flex justify-center gap-2'>
                                                             <button
-                                                                disabled={!!processing} onClick={() => handleStateUpdate(leave._id || leave.id, "APPROVED")}
+                                                                disabled={!!processing} onClick={() => handleStatusUpdate(leave._id || leave.id, "APPROVED")}
                                                                 className='p-1.5 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors'>
                                                                 {processing === (leave._id || leave.id)
                                                                     ? (

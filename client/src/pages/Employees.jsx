@@ -3,6 +3,7 @@ import { dummyEmployeeData, DEPARTMENTS } from "../assets/assets";
 import { Plus, Search, X } from "lucide-react";
 import EmployeeCard from "../components/EmployeeCard";
 import EmployeeForm from "../components/EmployeeForm";
+import api from "../api/axios";
 
 const Employees = () => {
   const [employees, setEmployees] = useState([])
@@ -13,11 +14,17 @@ const Employees = () => {
   const [showCreateModal, setShowCreateModal] = useState(false)
 
   const fetchEmployees = useCallback(async () => {
-    setLoading(true);
-    setEmployees(dummyEmployeeData.filter((emp) => (selectedDept ? emp.department === selectedDept : emp)));
-    setTimeout(() => {
+    try {
+      const url = selectedDept
+        ? `/employees?department=${selectedDept}`
+        : "/employees";
+      const res = await api.get(url);
+      setEmployees(res.data);
+    } catch (error) {
+      console.error("Failed to fetch employees");
+    } finally {
       setLoading(false);
-    }, 1000)
+    }
   }, [selectedDept])
 
   useEffect(() => {
@@ -82,10 +89,10 @@ const Employees = () => {
               </button>
             </div>
             <div className="p-6">
-              <EmployeeForm  onSuccess={()=>{
+              <EmployeeForm onSuccess={() => {
                 setShowCreateModal(false);
                 fetchEmployees();
-              }}   onCancel={()=>{setShowCreateModal(false)}}/>
+              }} onCancel={() => { setShowCreateModal(false) }} />
             </div>
           </div>
         </div>
@@ -109,10 +116,10 @@ const Employees = () => {
               </button>
             </div>
             <div className="p-6">
-              <EmployeeForm initialData={editEmployee} onSuccess={()=>{
+              <EmployeeForm initialData={editEmployee} onSuccess={() => {
                 setEditEmployee(null);
                 fetchEmployees();
-              }}   onCancel={()=>{setEditEmployee(null)}}/>
+              }} onCancel={() => { setEditEmployee(null) }} />
             </div>
           </div>
         </div>)}
