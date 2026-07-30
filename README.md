@@ -44,6 +44,7 @@ The application is built using the MERN stack and follows a REST API architectur
 * Node.js
 * Express.js
 * MongoDB
+* Inngest
 * Mongoose
 * JWT Authentication
 * Multer (Image Uploads)
@@ -128,11 +129,7 @@ The backend exposes RESTful APIs for:
 
 ## Future Improvements
 
-* Dashboard with employee analytics
-* Attendance management
 * Payroll module
-* Email notifications
-* Role-based permissions with multiple admin levels
 * Search and pagination
 * Dark mode
 
