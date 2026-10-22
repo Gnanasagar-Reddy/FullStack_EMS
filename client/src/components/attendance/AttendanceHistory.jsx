@@ -1,6 +1,6 @@
-import React from 'react'
 import { getDayTypeDisplay, getWorkingHoursDisplay } from '../../assets/assets'
-import { format }  from "date-fns"
+const dateFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Kolkata", month: "short", day: "2-digit", year: "numeric" });
+const timeFormatter = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: true });
 
 const AttendanceHistory = ({history}) => {
   return (
@@ -34,13 +34,13 @@ const AttendanceHistory = ({history}) => {
                       return(
                         <tr key={record._id || record.id}>
                           <td className='px-4 py-6 font-medium text-slate-900'>
-                              {format(new Date(record.date),"MMM dd, yyyy")}
+                              {dateFormatter.format(new Date(record.date))}
                           </td>
                           <td className='px-4 py-6 text-slate-600'>
-                            {record.checkIn ? format(new Date(record.checkIn),"hh:mm a") : "-"}
+                            {record.checkIn ? timeFormatter.format(new Date(record.checkIn)) : "-"}
                           </td>
                           <td className='px-4 py-6 text-slate-600'>
-                            {record.checkOut ? format(new Date(record.checkOut),"hh:mm a") : "-"}
+                            {record.checkOut ? timeFormatter.format(new Date(record.checkOut)) : "-"}
                           </td>
                           <td className='px-4 py-6 font-medium text-slate-600'>
                             {getWorkingHoursDisplay(record)}

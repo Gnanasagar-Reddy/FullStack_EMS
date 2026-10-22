@@ -1,5 +1,5 @@
 import { Loader2, Save, User } from 'lucide-react';
-import React, { useState } from 'react'
+import { useState } from 'react'
 import api from '../api/axios';
 
 const ProfileForm = ({ initialData, onSuccess }) => {

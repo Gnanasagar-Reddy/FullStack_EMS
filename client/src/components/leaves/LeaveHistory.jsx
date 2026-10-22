@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { format } from "date-fns"
 import { Check, Loader2, X } from 'lucide-react';
 import api from '../../api/axios';
@@ -33,7 +33,7 @@ const LeaveHistory = ({ leaves, isAdmin, onUpdate }) => {
                     <tbody>
                         {leaves.length === 0 ? (
                             <tr>
-                                <td colSpan={isAdmin ? 6 : 4} className='text-center py-12 text-slate-400'>
+                                <td colSpan={isAdmin ? 6 : 5} className='text-center py-12 text-slate-400'>
                                     No Leave applications found
                                 </td>
                             </tr>
@@ -87,7 +87,7 @@ const LeaveHistory = ({ leaves, isAdmin, onUpdate }) => {
                                                                     )}
                                                             </button>
                                                             <button
-                                                                disabled={!!processing} onClick={() => handleStateUpdate(leave._id || leave.id, "REJECTED")}
+                                                                disabled={!!processing} onClick={() => handleStatusUpdate(leave._id || leave.id, "REJECTED")}
                                                                 className='p-1.5 rounded-md bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors'>
                                                                 {processing === (leave._id || leave.id)
                                                                     ? (

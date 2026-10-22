@@ -8,13 +8,14 @@ const employeeSchema = new mongoose.Schema({
   email : {type : String, required : true},
   phone : {type : String, required : true},
   position : {type : String, required : true},
-  basicSalary : {type : Number, default : 0},
-  allowances : {type : Number, default : 0},
-  deductions : {type : Number, default : 0},
+  basicSalary : {type : Number, default : 0, min: 0, validate: Number.isFinite},
+  allowances : {type : Number, default : 0, min: 0, validate: Number.isFinite},
+  deductions : {type : Number, default : 0, min: 0, validate: Number.isFinite},
   employmentStatus : {type : String, enum : ["ACTIVE","INACTIVE"] , default:"ACTIVE"}, 
   joinDate : {type : Date ,required :true},
-  isDeleted : {type : Boolean ,required :false},
+  isDeleted : {type : Boolean, default: false},
   bio : {type : String ,default :""},
+  operationRevision: { type: Number, default: 0, select: false },
   department : {type : String ,enum :DEPARTMENTS},
 
 

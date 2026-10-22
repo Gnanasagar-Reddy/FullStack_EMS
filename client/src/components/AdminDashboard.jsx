@@ -1,5 +1,4 @@
 import { Building2Icon, CalendarIcon, FileTextIcon, UsersIcon } from 'lucide-react'
-import React from 'react'
 
 const AdminDashboard = ({data}) => {
     const stats =[

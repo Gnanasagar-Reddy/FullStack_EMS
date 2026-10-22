@@ -1,34 +1,36 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../api/axios.js";
+import { AuthContext } from "./auth.js";
 
-const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(localStorage.getItem("token"));
     const [loading, setLoading] = useState(true)
+    const [sessionError, setSessionError] = useState("");
 
-    const refreshSession = async () => {
+    const refreshSession = useCallback(() => {
         const storedToken = localStorage.getItem("token");
-        if (!storedToken) {
-            setUser(null);
-            setToken(null);
-            setLoading(false);
-            return;
-        }
-        try {
-            const {data} = await api.get("/auth/session");
+        const request = storedToken
+            ? api.get("/auth/session")
+            : Promise.resolve({ data: { user: null } });
+        return request.then(({ data }) => {
             setUser(data.user);
-        } catch (error) {
-            localStorage.removeItem("token")
-            setUser(null);
-            setToken(null);
-        } finally {
-            setLoading(false)
-        }
-    }
+            setToken(storedToken);
+            setSessionError("");
+        }).catch((error) => {
+            if (error.response?.status === 401) {
+                localStorage.removeItem("token");
+                setUser(null);
+                setToken(null);
+                setSessionError("");
+            } else {
+                setSessionError(error.response?.data?.error || "Unable to reach the server. Please try again.");
+            }
+        }).finally(() => setLoading(false));
+    }, []);
     useEffect(() => {
         refreshSession()
-    }, [])
+    }, [refreshSession])
 
     const login = async (email, password, role_type) => {
         const { data } = await api.post("/auth/login", {
@@ -40,6 +42,7 @@ export function AuthProvider({ children }) {
         localStorage.setItem("token", data.token);
         setToken(data.token);
         setUser(data.user);
+        setSessionError("");
         return data.user;
     }
 
@@ -47,20 +50,13 @@ export function AuthProvider({ children }) {
         localStorage.removeItem("token")
         setUser(null);
         setToken(null);
+        setSessionError("");
     }
 
-    const value = {user , token , loading , login , logout , refreshSession };
+    const value = {user , token , loading , sessionError , login , logout , refreshSession };
     return (
         <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     )
-}
-
-export function useAuth() {
-    const ctx = useContext(AuthContext);
-    if (!ctx) {
-        throw new Error("useAuth must be used within AuthProvider");
-    }
-    return ctx;
 }

@@ -1,27 +1,26 @@
 import { useCallback, useEffect, useState } from "react"
-import { dummyAttendanceData } from "../assets/assets";
 import Loading from "../components/Loading";
 import CheckInButton from "../components/attendance/CheckInButton";
 import AttendanceStats from "../components/attendance/AttendanceStats";
 import AttendanceHistory from "../components/attendance/AttendanceHistory";
 import toast from "react-hot-toast";
 import api from "../api/axios";
+import { dateInIndia } from "../utils/leaveDates";
 
 function Attendance() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isDeleted, setIsDeleted] = useState(false)
-  const fetchData = useCallback(async () => {
-    try {
-      const res = await api.get("/attendance");
+  const fetchData = useCallback(() => {
+    return api.get("/attendance").then((res) => {
       const json = res.data;
       setHistory(json.data || [])
       if (json.employee?.isDeleted) setIsDeleted(true)
-    } catch (error) {
+    }).catch((error) => {
       toast.error(error?.response?.data?.error || error?.message)
-    } finally {
+    }).finally(() => {
       setLoading(false)
-    }
+    });
   }, [])
   useEffect(() => {
     fetchData()
@@ -29,12 +28,8 @@ function Attendance() {
 
   if (loading) return <Loading />
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0)
-  console.log(history)
-  console.log(today)
-  console.log(history.length)
-  const todayRecord = history.find((r) => new Date(r.date).toDateString() === today.toDateString());
+  const today = dateInIndia();
+  const todayRecord = history.find((r) => dateInIndia(new Date(r.date)) === today);
 
   return (
     <div className="animate-fade-in">

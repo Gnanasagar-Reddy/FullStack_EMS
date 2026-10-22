@@ -1,6 +1,9 @@
 import { inngest } from "../inngest/index.js";
 import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
+import { httpError, withEmployeeLock } from "../utils/employeeTransactions.js";
+import { indiaDay } from "../utils/attendanceDates.js";
+import { queueEvent, deliverEvent } from "../utils/events.js";
 
 // Clock in/out for employees
 // GET api/attendance
@@ -8,75 +11,49 @@ import Employee from "../models/Employee.js";
 
 export const clockInOut = async (req, res) => {
     try {
-        const session = req.session;
-        const employee = await Employee.findOne({ userId: session.userId });
+        const action = req.body?.action;
+        if (!["CHECK_IN", "CHECK_OUT"].includes(action)) return res.status(400).json({ error: "Choose clock in or clock out" });
+        const employee = await Employee.findOne({ userId: req.session.userId });
         if (!employee) return res.status(404).json({ error: "Employee not found" });
-        if (employee.isDeleted) return res.status(403).json({
-            error: "Your account is deactivated. You cannot clock in/out.",
+        const result = await withEmployeeLock(employee._id, async (dbSession, currentEmployee) => {
+            if (currentEmployee.isDeleted || currentEmployee.employmentStatus === "INACTIVE") {
+                throw httpError(403, "Your account is deactivated. You cannot clock in/out.");
+            }
+            const now = new Date();
+            const { start, end, isLate } = indiaDay(now);
+            const existing = await Attendance.findOne({
+                employeeId: employee._id, date: { $gte: start, $lt: end },
+            }).session(dbSession);
+            if (action === "CHECK_IN") {
+                // Repeated clock-in requests are safe and never act as clock-out.
+                if (existing) return { attendance: existing, type: existing.checkOut ? "CHECK_OUT" : "CHECK_IN" };
+                const [attendance] = await Attendance.create([{
+                    employeeId: employee._id, date: start, checkIn: now, status: isLate ? "LATE" : "PRESENT",
+                }], { session: dbSession });
+                const event = await queueEvent("employee/check-out", {
+                    employeeId: employee._id.toString(), attendanceId: attendance._id.toString(),
+                }, dbSession);
+                return { attendance, type: "CHECK_IN", event };
+            }
+            if (!existing?.checkIn) throw httpError(409, "Clock in before clocking out");
+            if (existing.checkOut) return { attendance: existing, type: "CHECK_OUT" };
+            const workingHours = Number(((now.getTime() - new Date(existing.checkIn).getTime()) / 3600000).toFixed(2));
+            const dayType = workingHours >= 8 ? "Full Day" : workingHours >= 6 ? "Three Quarter Day" : workingHours >= 4 ? "Half Day" : "Short Day";
+            const attendance = await Attendance.findOneAndUpdate(
+                { _id: existing._id, checkOut: null },
+                { $set: { checkOut: now, workingHours, dayType } },
+                { session: dbSession, returnDocument: "after", runValidators: true }
+            );
+            return { attendance: attendance || existing, type: "CHECK_OUT" };
         });
-
-        const today = new Date()
-        today.setHours(0, 0, 0, 0);
-        const existing = await Attendance.findOne({
-            employeeId: employee._id,
-            date: today,
-        })
-        const now = new Date();
-        if (!existing) {
-            const isLate = now.getHours() > 9 || (now.getHours() === 9 && now.getMinutes() > 0);
-            const attendance = await Attendance.create({
-                employeeId: employee._id,
-                date: today,
-                checkIn: now,
-                status: isLate ? "LATE" : "PRESENT"
-            })
-
-            await inngest.send({
-                name: "employee/check-out",
-                data: {
-                    employeeId: employee._id,
-                    attendanceId: attendance._id,
-                }
-            })
-
-            return res.json({
-                success: true,
-                type: "CHECK_IN",
-                data: attendance
-            });
-        }
-        else if (!existing.checkOut) {
-            const checkInTime = new Date(existing.checkIn).getTime()
-            const diffMs = now.getTime() - checkInTime;
-            const diffHours = diffMs / (1000 * 60 * 60)
-            existing.checkOut = now;
-            // Compute working hours and day type
-            const workingHours = parseFloat(diffHours.toFixed(2))
-            let dayType = "Half Day";
-
-            if (workingHours >= 8) dayType = "Full Day";
-            else if (workingHours >= 6) dayType = "Three Quarter Day";
-            else if (workingHours >= 4) dayType = "Half Day";
-            else dayType = "Short Day";
-            existing.workingHours = workingHours;
-            existing.dayType = dayType;
-
-            await existing.save();
-            return res.json({
-                success: true,
-                type: "CHECK_OUT",
-                data: existing
-            });
-        }
-        else {
-            return res.json({ success: true, type: "CHECK_OUT", data: existing });
-        }
+        if (result.event) await deliverEvent(inngest, result.event);
+        return res.json({ success: true, type: result.type, data: result.attendance });
+    } catch (error) {
+        if (error.status) return res.status(error.status).json({ error: error.message });
+        console.error("Attendance error:", error.message);
+        return res.status(500).json({ error: "Operation failed" });
     }
-    catch (error) {
-        console.error("AttendanceError :", error)
-        return res.status(500).json({ error: "Operation failed" })
-    }
-}
+};
 
 
 // get attendance for employee

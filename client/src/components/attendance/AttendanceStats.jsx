@@ -1,13 +1,16 @@
 import { AlertCircleIcon, CalendarIcon, ClockIcon } from 'lucide-react';
-import React from 'react'
 
 const AttendanceStats = ({ history }) => {
-    const totalPresent = history.filter((h) => h.status === "PRESENT" | h.status === "LATE").length;
+    const totalPresent = history.filter((h) => h.status === "PRESENT" || h.status === "LATE").length;
     const totalLate = history.filter((h) => h.status === "LATE").length;
+    const completedRecords = history.filter((h) => h.checkOut && Number.isFinite(h.workingHours) && h.workingHours >= 0);
+    const averageHours = completedRecords.length
+        ? `${(completedRecords.reduce((total, h) => total + h.workingHours, 0) / completedRecords.length).toFixed(1)} hrs`
+        : "N/A";
     const stats = [
         { label: "Days Present", value: totalPresent, icon: CalendarIcon },
         { label: "Late Arrivals", value: totalLate, icon: AlertCircleIcon },
-        { label: "Avg. Work Hrs", value: "8.5 hrs", icon: ClockIcon },
+        { label: "Avg. Work Hrs", value: averageHours, icon: ClockIcon },
     ]
     return (
         <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 mb-8'>

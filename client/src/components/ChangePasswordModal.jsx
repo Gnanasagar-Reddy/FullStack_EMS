@@ -1,8 +1,10 @@
 import { Loader2Icon, LockIcon, X } from 'lucide-react';
-import React, { useState } from 'react'
+import { useState } from 'react'
 import api from '../api/axios';
+import { useAuth } from '../context/auth.js';
 
-const ChangePasswordModal = ({ open, onClose }) => {
+const ChangePasswordModal = ({ open, onClose, required = false, onSuccess }) => {
+    const { refreshSession } = useAuth();
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: "", text: "" })
     const handleSubmit = async (e) => {
@@ -15,29 +17,33 @@ const ChangePasswordModal = ({ open, onClose }) => {
         try {
             const { data } = await api.post("/auth/change-password",
                 { currentPassword, newPassword });
-            if (!data.status) throw new Error(data.error || "Failed")
-                setMessage({type:"success" , text:"Password updated successfully"})
-                e.target.reset();
+            if (!data.status) throw new Error(data.error || "Failed");
+            if (data.token) localStorage.setItem("token", data.token);
+            setMessage({type:"success" , text:"Password updated successfully"});
+            e.target.reset();
+            await refreshSession();
+            if (onSuccess && onSuccess !== refreshSession) await onSuccess();
         } catch (error) {
-            setMessage({ type: "error", text: error.message })
+            setMessage({ type: "error", text: error.response?.data?.error || error.message })
         } finally {
             setLoading(false);
         }
     }
     if (!open) return null
     return (
-        <div onClick={onClose}
+        <div onClick={required ? undefined : onClose}
             className='fixed inset-0 z-50 flex items-center justify-center p-4'>
             <div className='absolute inset-0 bg-black/40 backdrop-blur-sm' />
 
             <div className='relative bg-white rounded-2xl shadow-2xl w-full max-w-md animate-fade-in' onClick={(e) => e.stopPropagation()}>
                 <div className='flex items-center justify-between p-6 pb-0'>
                     <h2 className='text-lg font-medium text-slate-900 flex items-center gap-2'>
-                        <LockIcon lastname="w-5 h-5 text-slate-400" /> Change Password
+                        <LockIcon className="w-5 h-5 text-slate-400" /> Change Password
                     </h2>
-                    <button onClick={onClose} className='p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600'><X className="w-5 h-5" /></button>
+                    {!required && <button onClick={onClose} className='p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600'><X className="w-5 h-5" /></button>}
                 </div>
                 <form className="p-6 space-y-5" onSubmit={handleSubmit}>
+                    {required && <p className="text-sm text-slate-600">Set a new password with at least 12 characters before using your account.</p>}
                     {message.text && (
                         <div className={`p-3 rounded-xl text-sm flex items-start gap-3 ${message.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"}`}>
                             <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${message.type === "success" ? "bg-emerald-500" : "bg-rose-500"}`} />
@@ -54,11 +60,11 @@ const ChangePasswordModal = ({ open, onClose }) => {
                         <label className="block text-sm font-medium text-slate-700 mb-2">
                             New Password
                         </label>
-                        <input type="password" name="newPassword" required />
+                        <input type="password" name="newPassword" minLength={required ? 12 : undefined} required />
                     </div>
                     <div className='flex gap-3 pt-2'>
                         <button type="button" onClick={onClose} className="btn-secondary flex-1">
-                            Cancel
+                            {required ? "Sign out" : "Cancel"}
                         </button>
                         <button
                             type="submit"

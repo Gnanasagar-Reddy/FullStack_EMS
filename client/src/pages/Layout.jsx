@@ -1,12 +1,23 @@
 import { Navigate, Outlet } from "react-router-dom"
 import Sidebar from "../components/Sidebar"
-import { useAuth } from "../context/AuthContext.jsx"
+import { useAuth } from "../context/auth.js"
 import Loading from "../components/Loading.jsx";
+import ChangePasswordModal from "../components/ChangePasswordModal.jsx";
 
 const Layout = () => {
-  const {user,loading} = useAuth();
+  const {user, token, loading, sessionError, refreshSession, logout} = useAuth();
   if(loading)return <Loading/>
+  if (!user && token && sessionError) return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
+      <p role="alert" className="text-rose-600">{sessionError}</p>
+      <button onClick={refreshSession} className="btn-primary">Retry connection</button>
+      <button onClick={logout} className="btn-secondary">Sign out</button>
+    </div>
+  );
   if(!user)return <Navigate to="/login"/>
+  if (user.mustChangePassword) return (
+    <ChangePasswordModal open required onSuccess={refreshSession} onClose={logout} />
+  );
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">

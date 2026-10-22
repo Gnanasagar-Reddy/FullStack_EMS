@@ -1,7 +1,7 @@
 import { createTransport } from "nodemailer";
 
 // Create a transporter using SMTP
-const transporter = createTransport({
+export const transporter = createTransport({
   host: "smtp-relay.brevo.com",
   port: 587,
   auth: {

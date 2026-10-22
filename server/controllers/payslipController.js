@@ -1,5 +1,8 @@
 import Employee from "../models/Employee.js";
 import Payslip from "../models/Payslip.js";
+import mongoose from "mongoose";
+import { httpError, withEmployeeLock } from "../utils/employeeTransactions.js";
+import { moneyInCents } from "../utils/payroll.js";
 
 
 //create payslips
@@ -9,27 +12,36 @@ import Payslip from "../models/Payslip.js";
 export const createPayslip = async (req, res) => {
     try {
         const { employeeId, month, year, basicSalary, allowances, deductions } = req.body;
-        if (!employeeId || !month || !year || !basicSalary) {
-            return res.status(400).json({
-                error: "Missing fields"
-            });
+        const salaryCents = moneyInCents(basicSalary);
+        const allowanceCents = moneyInCents(allowances === undefined ? 0 : allowances);
+        const deductionCents = moneyInCents(deductions === undefined ? 0 : deductions);
+        const numericMonth = typeof month === "string" || typeof month === "number" ? Number(month) : NaN;
+        const numericYear = typeof year === "string" || typeof year === "number" ? Number(year) : NaN;
+        if (!mongoose.isObjectIdOrHexString(employeeId) || !Number.isInteger(numericMonth) || numericMonth < 1 || numericMonth > 12 ||
+            !Number.isInteger(numericYear) || numericYear < 1000 || numericYear > 9999 ||
+            [salaryCents, allowanceCents, deductionCents].includes(null)) {
+            return res.status(400).json({ error: "Provide a valid employee, month, year, and non-negative amounts with at most two decimal places" });
         }
-
-        const netSalary = Number(basicSalary)
-            + Number(allowances || 0)
-            - Number(deductions || 0);
-
-        const payslip = await Payslip.create({
-            employeeId,
-            month: Number(month),
-            year: Number(year),
-            basicSalary: Number(basicSalary),
-            allowances: Number(allowances || 0),
-            deductions: Number(deductions || 0),
-            netSalary
-        })
+        const netCents = salaryCents + allowanceCents - deductionCents;
+        if (!Number.isSafeInteger(salaryCents + allowanceCents) || !Number.isSafeInteger(netCents) || netCents < 0) {
+            return res.status(400).json({ error: "Deductions cannot exceed earnings and amounts must be within the supported range" });
+        }
+        const payslip = await withEmployeeLock(employeeId, async (dbSession, employee) => {
+            if (employee.isDeleted || employee.employmentStatus === "INACTIVE") throw httpError(403, "Cannot generate payslips for an inactive employee");
+            const existing = await Payslip.findOne({ employeeId, month: numericMonth, year: numericYear }).session(dbSession);
+            if (existing) throw httpError(409, "A payslip already exists for this employee and period");
+            const [created] = await Payslip.create([{
+                employeeId, month: numericMonth, year: numericYear,
+                basicSalary: salaryCents / 100, allowances: allowanceCents / 100,
+                deductions: deductionCents / 100, netSalary: netCents / 100,
+            }], { session: dbSession });
+            return created;
+        });
         return res.json({ success: true, data: payslip })
     } catch (error) {
+        if (error.status) return res.status(error.status).json({ error: error.message });
+        if (error.code === 11000) return res.status(409).json({ error: "A payslip already exists for this employee and period" });
+        if (error.name === "ValidationError" || error.name === "CastError") return res.status(400).json({ error: "Invalid payslip details" });
         return res.status(500).json({ error: "Failed" })
     }
 }
@@ -85,7 +97,14 @@ export const getPayslips = async (req, res) => {
 
 export const getPayslipById = async (req, res) => {
     try {
-        const payslip = await Payslip.findById(req.params.id).populate("employeeId").lean();
+        if (!mongoose.isObjectIdOrHexString(req.params.id)) return res.status(400).json({ error: "Invalid payslip ID" });
+        const where = { _id: req.params.id };
+        if (req.session.role !== "ADMIN") {
+            const employee = await Employee.findOne({ userId: req.session.userId });
+            if (!employee) return res.status(404).json({ error: "Not found" });
+            where.employeeId = employee._id;
+        }
+        const payslip = await Payslip.findOne(where).populate("employeeId").lean();
         if(!payslip)return res.status(404).json({error:"Not found"})
         const result={
           ...payslip,

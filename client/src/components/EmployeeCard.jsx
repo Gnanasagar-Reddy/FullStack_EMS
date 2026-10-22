@@ -1,5 +1,4 @@
-import { EditIcon, PencilIcon, Trash2Icon } from 'lucide-react'
-import React from 'react'
+import { PencilIcon, Trash2Icon } from 'lucide-react'
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 
