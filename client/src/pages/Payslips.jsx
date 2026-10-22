@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from "react"
-import { dummyEmployeeData, dummyPayslipData } from "../assets/assets";
 import Loading from "../components/Loading";
 import PayslipList from "../components/payslip/PayslipList";
 import GeneratePayslipForm from "../components/payslip/GeneratePayslipForm";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/auth.js";
 import api from "../api/axios";
 import toast from "react-hot-toast";
 
@@ -13,15 +12,14 @@ function Payslips() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth()
   const isAdmin = user?.role === "ADMIN";
-  const fetchPayslips = useCallback(async () => {
-    try {
-      const res = await api.get('/payslips')
+  const fetchPayslips = useCallback(() => {
+    return api.get('/payslips').then((res) => {
       setPayslips(res.data.data || [])
-    } catch (error) {
+    }).catch((error) => {
       toast.error(error?.response?.data?.error || error?.message);
-    } finally {
+    }).finally(() => {
       setLoading(false)
-    }
+    });
   }, [])
   useEffect(() => {
     fetchPayslips()

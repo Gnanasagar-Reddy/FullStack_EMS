@@ -1,14 +1,12 @@
 import { CalendarDays, FileText, Loader2, Send, X } from 'lucide-react';
-import React, { useState } from 'react'
+import { useState } from 'react'
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
+import { tomorrowInIndia } from '../../utils/leaveDates';
 
 const ApplyLeaveModal = ({ open, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-  const minDate = tomorrow.toISOString().split('T')[0];
+  const minDate = tomorrowInIndia();
 
   const handleSubmit = async (e) => {
     e.preventDefault();

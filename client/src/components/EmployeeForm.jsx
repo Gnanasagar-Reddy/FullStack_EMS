@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from "react-router-dom"
 import { DEPARTMENTS } from '../assets/assets';
 import api from '../api/axios';
+import toast from 'react-hot-toast';
 import { Loader2Icon } from 'lucide-react';
 
 const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {

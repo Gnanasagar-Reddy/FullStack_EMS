@@ -5,7 +5,7 @@ import {
   ArrowRightIcon
 } from "lucide-react"
 import { Link, Navigate } from "react-router-dom"
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../context/auth.js";
 import Loading from "../components/Loading.jsx";
 
 const LoginLanding = () => {

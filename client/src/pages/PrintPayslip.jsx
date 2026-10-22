@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom"
-import { dummyPayslipData } from "../assets/assets";
 import Loading from "../components/Loading";
 import { format } from "date-fns"
 import api from "../api/axios";
@@ -69,7 +68,7 @@ const PrintPayslip = () => {
             </tr>
             <tr className="border-t-2 border-slate-200 bg-slate-50">
               <td className='py-4 px-4 font-bold text-slate-900'>Net Salary</td>
-              <td className='text-right py-4 px-4 font-bold text-slate-900text-lg'>${payslip.netSalary?.toLocaleString()}</td>
+              <td className='text-right py-4 px-4 font-bold text-slate-900 text-lg'>${payslip.netSalary?.toLocaleString()}</td>
             </tr>
           </tbody>
         </table>

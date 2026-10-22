@@ -1,5 +1,5 @@
 import { Loader2, Plus, X } from 'lucide-react';
-import React, { useState } from 'react'
+import { useState } from 'react'
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
 
@@ -74,7 +74,7 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
                             <label className="block text-sm font-medium text-slate-700 mb-2">
                                 Year
                             </label>
-                            <input type="number" name='year' defaultValue={new Date().getFullYear()} />
+                            <input type="number" min="1000" max="9999" step="1" required name='year' defaultValue={new Date().getFullYear()} />
                         </div>
                     </div>
                     {/* Basic Salary */}
@@ -82,7 +82,7 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
                         <label className="block text-sm font-medium text-slate-700 mb-2">
                             BasicSalary
                         </label>
-                        <input type="number" name="basicSalary" required placeholder="5000" />
+                        <input type="number" min="0" step="0.01" name="basicSalary" required placeholder="5000" />
                     </div>
                     {/* Allowances and Deductions */}
                     <div className='grid grid-cols-2 gap-4'>
@@ -90,13 +90,13 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
                             <label className="block text-sm font-medium text-slate-700 mb-2">
                                 Allowances
                             </label>
-                            <input type="number" name='allowances' defaultValue={0} />
+                            <input type="number" min="0" step="0.01" name="allowances" defaultValue={0} />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2">
                                 Deductions
                             </label>
-                            <input type="number" name='deductions' defaultValue={0} />
+                            <input type="number" min="0" step="0.01" name="deductions" defaultValue={0} />
                         </div>
                     </div>
                     {/* buttons */}
