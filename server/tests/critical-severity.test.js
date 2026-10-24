@@ -334,6 +334,9 @@ test("new employees default to non-deleted and reminder query includes legacy mi
 });
 
 test("attendance reminder waits for email delivery and propagates SMTP failures", async (t) => {
+    t.mock.method(Employee, "findById", async () => ({ firstName: "Test", email: "test@example.test", employmentStatus: "ACTIVE" }));
+    t.mock.method(Attendance, "exists", async () => null);
+    t.mock.method(LeaveApplication, "exists", async () => null);
     t.mock.method(Employee, "find", () => ({ lean: async () => [{ _id: id, firstName: "Test", email: "test@example.test" }] }));
     t.mock.method(LeaveApplication, "find", () => ({ lean: async () => [] }));
     t.mock.method(Attendance, "find", () => ({ lean: async () => [] }));
@@ -357,6 +360,7 @@ test("the retry job retries retained events while continuing past an unavailable
     t.mock.method(inngest, "send", async (event) => { if (event.id === id) throw new Error("delivery unavailable"); });
     const removed = [];
     t.mock.method(PendingEvent, "deleteOne", async (where) => { removed.push(where._id); });
+    t.mock.method(PendingEvent, "updateMany", async (where) => assert.deepEqual(where._id.$in, [id]));
     const retry = functions.find((fn) => fn.opts.id === "pending-event-retry");
     const result = await retry.fn({ step: { run: async (_name, operation) => operation() } });
     assert.deepEqual(result, { delivered: 1, pending: 1 });

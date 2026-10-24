@@ -10,6 +10,8 @@ Use `npm run test:integration` with `EMS_VALIDATION_MONGODB_URI` set to an empty
 
 For Vercel, configure this directory as the project root and supply the same environment variables through deployment settings. The backend configuration is `vercel.json`. Sync the `/api/inngest` endpoint after deployment to register checkout, reminder, and pending-event retry functions. Failed event deliveries remain in `PendingEvent` and are retried every five minutes with a stable event ID.
 
+See [INNGEST_SETUP.md](./INNGEST_SETUP.md) for the five functions, Cloud sync steps, local PowerShell commands, and verification instructions.
+
 Clock-in/out requests must include `{ "action": "CHECK_IN" }` or `{ "action": "CHECK_OUT" }`; repeated submissions of the same action do not reverse it. Attendance dates, the late-arrival cutoff, dashboard boundaries, and reminders use Asia/Kolkata.
 
 Session checks use the current account role and employee status. Password changes and admin password/role changes invalidate prior tokens. Existing tokens without a version remain valid only while the account version is still zero.

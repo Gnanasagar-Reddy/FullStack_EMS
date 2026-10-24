@@ -8,7 +8,9 @@ export async function queueEvent(name, data, session) {
 // The stable event ID lets Inngest deduplicate a retry after delivery succeeds.
 export async function deliverEvent(client, event) {
     try {
-        await client.send({ id: event._id.toString(), name: event.name, data: event.data });
+        const timestamp = new Date(event.createdAt).getTime();
+        await client.send({ id: event._id.toString(), name: event.name, data: event.data,
+            ...(Number.isFinite(timestamp) ? { ts: timestamp } : {}) });
         await PendingEvent.deleteOne({ _id: event._id });
         return true;
     } catch (error) {
